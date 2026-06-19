@@ -34,10 +34,10 @@
 
     <div id="status" class="status online">⏳ Введите токен и нажмите "Читать"</div>
 
-    <!-- ТОКЕН (один раз) -->
+    <!-- ТОКЕН -->
     <div class="add-form">
         <input type="password" id="tokenInput" placeholder="Введите GitHub токен" class="token-input">
-        <small style="color:#888;">Токен нужен для сохранения. Получить: Settings → Developer settings → Personal access tokens</small>
+        <small style="color:#888;">Токен нужен для сохранения</small>
     </div>
 
     <!-- ФОРМА ДОБАВЛЕНИЯ -->
@@ -63,15 +63,15 @@
 
 <script>
     // ============================================
-    // НАСТРОЙКИ
+    // НАСТРОЙКИ — ТВОЙ РЕПОЗИТОРИЙ "brawl"
     // ============================================
     const REPO_OWNER = "wezerr2313212323";
-    const REPO_NAME = "brawl-stars-leaderboard";
+    const REPO_NAME = "brawl";  // ← ИСПРАВЛЕНО!
     const FILE_PATH = "players.json";
     const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 
     let playersData = { players: [] };
-    let currentSha = null; // SHA файла на GitHub
+    let currentSha = null;
     let githubToken = "";
 
     // ============================================
@@ -88,7 +88,7 @@
     }
 
     // ============================================
-    // ЧТЕНИЕ ДАННЫХ ИЗ GITHUB
+    // ЧТЕНИЕ ДАННЫХ
     // ============================================
     function readData() {
         const token = getToken();
@@ -106,7 +106,6 @@
         })
         .then(response => {
             if (response.status === 404) {
-                // Файла нет — создадим пустой
                 return { content: btoa(JSON.stringify({ players: [] })), sha: null };
             }
             if (!response.ok) throw new Error('Ошибка: ' + response.status);
@@ -119,7 +118,7 @@
             playersData = json;
             if (!playersData.players) playersData.players = [];
             showPlayers();
-            document.getElementById('status').textContent = '✅ Данные загружены (' + playersData.players.length + ' игроков)';
+            document.getElementById('status').textContent = '✅ Загружено (' + playersData.players.length + ' игроков)';
             document.getElementById('status').className = 'status online';
             showToast('✅ Загружено ' + playersData.players.length + ' игроков');
         })
@@ -132,7 +131,7 @@
     }
 
     // ============================================
-    // СОХРАНЕНИЕ В GITHUB (СОЗДАЁТ JSON В КОРНЕ!)
+    // СОХРАНЕНИЕ В GITHUB
     // ============================================
     function saveToGitHub() {
         const token = getToken();
@@ -150,7 +149,7 @@
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(playersData, null, 2))));
 
         const body = {
-            message: 'Обновление данных через сайт',
+            message: 'Обновление данных',
             content: content,
             sha: currentSha || null
         };
@@ -170,10 +169,10 @@
         })
         .then(data => {
             currentSha = data.content.sha;
-            document.getElementById('status').textContent = '✅ JSON сохранён в корне репозитория!';
+            document.getElementById('status').textContent = '✅ JSON сохранён!';
             document.getElementById('status').className = 'status online';
-            showToast('✅ JSON создан в корне!');
-            console.log('✅ Файл сохранён:', data.content.html_url);
+            showToast('✅ Сохранено!');
+            console.log('✅ Файл сохранён');
         })
         .catch(error => {
             console.error('Ошибка:', error);
@@ -184,95 +183,56 @@
     }
 
     // ============================================
-    // ДОБАВЛЕНИЕ ИГРОКА
+    // ОСТАЛЬНЫЕ ФУНКЦИИ
     // ============================================
     function addPlayer() {
         const name = document.getElementById('playerName').value.trim();
         const trophies = parseInt(document.getElementById('playerTrophies').value) || 0;
-
-        if (!name) {
-            alert('Введите имя!');
-            return;
-        }
-
-        playersData.players.push({
-            id: 'p' + Date.now(),
-            name: name,
-            trophies: trophies
-        });
-
+        if (!name) { alert('Введите имя!'); return; }
+        playersData.players.push({ id: 'p' + Date.now(), name: name, trophies: trophies });
         document.getElementById('playerName').value = '';
         document.getElementById('playerTrophies').value = '0';
-
         showPlayers();
         showToast('✅ Добавлен: ' + name);
     }
 
-    // ============================================
-    // ПОКАЗАТЬ ТОП
-    // ============================================
     function showPlayers() {
         const list = document.getElementById('list');
         const players = playersData.players || [];
-
         if (players.length === 0) {
             list.innerHTML = '<div class="empty">👾 Нет игроков</div>';
             document.getElementById('count').textContent = '0 игроков';
             return;
         }
-
         players.sort((a, b) => b.trophies - a.trophies);
-
         let html = '';
-        const top10 = players.slice(0, 10);
-
-        top10.forEach((p, i) => {
-            let cls = '';
-            let medal = '#' + (i + 1);
+        players.slice(0, 10).forEach((p, i) => {
+            let cls = '', medal = '#' + (i + 1);
             if (i === 0) { cls = 'top1'; medal = '🥇'; }
             else if (i === 1) { cls = 'top2'; medal = '🥈'; }
             else if (i === 2) { cls = 'top3'; medal = '🥉'; }
-
-            html += `
-                <div class="player ${cls}">
-                    <span>${medal} ${p.name}</span>
-                    <span>🏆 ${p.trophies}</span>
-                </div>
-            `;
+            html += `<div class="player ${cls}"><span>${medal} ${p.name}</span><span>🏆 ${p.trophies}</span></div>`;
         });
-
         list.innerHTML = html;
         document.getElementById('count').textContent = players.length + ' игроков';
     }
 
-    // ============================================
-    // ОЧИСТИТЬ ВСЁ
-    // ============================================
     function clearAll() {
         if (!confirm('Удалить всех игроков?')) return;
         playersData.players = [];
         showPlayers();
-        showToast('🗑️ Все игроки удалены');
+        showToast('🗑️ Все удалены');
     }
 
-    // ============================================
-    // УВЕДОМЛЕНИЯ
-    // ============================================
     function showToast(message) {
         const toast = document.getElementById('toast');
         toast.textContent = message;
         toast.className = 'toast show';
         clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => {
-            toast.className = 'toast';
-        }, 3000);
+        toast._timeout = setTimeout(() => { toast.className = 'toast'; }, 3000);
     }
 
-    // ============================================
-    // ЗАПУСК
-    // ============================================
     showPlayers();
-    console.log('📁 JSON будет создан в корне репозитория при нажатии "Сохранить"');
 </script>
 </body>
 </html>
