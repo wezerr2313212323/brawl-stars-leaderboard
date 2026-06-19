@@ -4,74 +4,41 @@
     <title>Brawl Stars — Лидеры</title>
     <meta charset="UTF-8">
     <style>
-        body {
-            background: #1a1a2e;
-            color: white;
-            font-family: Arial;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: #16213e;
-            padding: 20px;
-            border-radius: 20px;
-        }
-        button {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        button:hover {
-            background: #c73a52;
-        }
-        .player {
-            background: #0f3460;
-            margin: 5px 0;
-            padding: 10px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; color: white; font-family: Arial; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: #16213e; padding: 20px; border-radius: 20px; }
+        button { background: #e94560; color: white; border: none; padding: 12px 30px; border-radius: 10px; font-size: 18px; cursor: pointer; margin: 10px; }
+        button:hover { background: #c73a52; }
+        .player { background: #0f3460; margin: 5px 0; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; }
         .top1 { background: #ffd700; color: black; }
         .top2 { background: #c0c0c0; color: black; }
         .top3 { background: #cd7f32; color: black; }
-        .status {
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px 0;
-        }
+        .status { padding: 10px; border-radius: 10px; margin: 10px 0; }
         .online { background: #0f3460; color: #4CAF50; }
         .offline { background: #0f3460; color: #f44336; }
         .empty { color: #666; padding: 30px; }
-        input {
-            padding: 10px;
-            border-radius: 10px;
-            border: none;
-            margin: 5px;
-            font-size: 16px;
-        }
-        .add-form {
-            background: #0f3460;
-            padding: 15px;
-            border-radius: 15px;
-            margin: 15px 0;
-        }
+        input { padding: 10px; border-radius: 10px; border: none; margin: 5px; font-size: 16px; }
+        .add-form { background: #0f3460; padding: 15px; border-radius: 15px; margin: 15px 0; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #0f3460; color: white; padding: 15px 30px; border-radius: 10px; display: none; z-index: 2000; font-weight: bold; }
+        .toast.show { display: block; animation: fadeInUp 0.3s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .info { font-size: 12px; color: #666; margin-top: 10px; }
+        .token-input { width: 100%; padding: 10px; border-radius: 10px; border: none; margin: 10px 0; background: #0f3460; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🏆 BRAWL STARS</h1>
-    <h3>Таблица лидеров</h3>
+    <h3>Таблица лидеров (GitHub)</h3>
 
-    <div id="status" class="status online">✅ Готов к работе</div>
+    <div id="status" class="status online">⏳ Введите токен и нажмите "Читать"</div>
+
+    <!-- ТОКЕН (один раз) -->
+    <div class="add-form">
+        <input type="password" id="tokenInput" placeholder="Введите GitHub токен" class="token-input">
+        <small style="color:#888;">Токен нужен для сохранения. Получить: Settings → Developer settings → Personal access tokens</small>
+    </div>
 
     <!-- ФОРМА ДОБАВЛЕНИЯ -->
     <div class="add-form">
@@ -80,7 +47,8 @@
         <button onclick="addPlayer()">➕ Добавить</button>
     </div>
 
-    <button onclick="showData()">📊 Показать топ</button>
+    <button onclick="readData()">📖 Читать</button>
+    <button onclick="saveToGitHub()">💾 Сохранить в GitHub</button>
     <button onclick="clearAll()">🗑️ Очистить всё</button>
 
     <div id="list">
@@ -88,17 +56,132 @@
     </div>
 
     <div id="count" style="margin-top:15px;color:#888;">0 игроков</div>
+    <div id="fileInfo" class="info">📁 Файл: players.json</div>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script>
     // ============================================
-    // JSON СОЗДАЁТСЯ ПРЯМО ЗДЕСЬ!
+    // НАСТРОЙКИ
     // ============================================
+    const REPO_OWNER = "wezerr2313212323";
+    const REPO_NAME = "brawl-stars-leaderboard";
+    const FILE_PATH = "players.json";
+    const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 
-    // Наш JSON с игроками (изначально пустой)
-    let playersData = {
-        players: []
-    };
+    let playersData = { players: [] };
+    let currentSha = null; // SHA файла на GitHub
+    let githubToken = "";
+
+    // ============================================
+    // ПОЛУЧИТЬ ТОКЕН
+    // ============================================
+    function getToken() {
+        const token = document.getElementById('tokenInput').value.trim();
+        if (!token) {
+            showToast('⚠️ Введите GitHub токен!');
+            return null;
+        }
+        githubToken = token;
+        return token;
+    }
+
+    // ============================================
+    // ЧТЕНИЕ ДАННЫХ ИЗ GITHUB
+    // ============================================
+    function readData() {
+        const token = getToken();
+        if (!token) return;
+
+        showToast('⏳ Чтение...');
+        document.getElementById('status').textContent = '⏳ Чтение...';
+        document.getElementById('status').className = 'status online';
+
+        fetch(API_URL, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        })
+        .then(response => {
+            if (response.status === 404) {
+                // Файла нет — создадим пустой
+                return { content: btoa(JSON.stringify({ players: [] })), sha: null };
+            }
+            if (!response.ok) throw new Error('Ошибка: ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            currentSha = data.sha || null;
+            const content = atob(data.content);
+            const json = JSON.parse(content);
+            playersData = json;
+            if (!playersData.players) playersData.players = [];
+            showPlayers();
+            document.getElementById('status').textContent = '✅ Данные загружены (' + playersData.players.length + ' игроков)';
+            document.getElementById('status').className = 'status online';
+            showToast('✅ Загружено ' + playersData.players.length + ' игроков');
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            document.getElementById('status').textContent = '❌ Ошибка: ' + error.message;
+            document.getElementById('status').className = 'status offline';
+            showToast('❌ Ошибка: ' + error.message);
+        });
+    }
+
+    // ============================================
+    // СОХРАНЕНИЕ В GITHUB (СОЗДАЁТ JSON В КОРНЕ!)
+    // ============================================
+    function saveToGitHub() {
+        const token = getToken();
+        if (!token) return;
+
+        if (playersData.players.length === 0) {
+            showToast('⚠️ Нет данных для сохранения!');
+            return;
+        }
+
+        showToast('⏳ Сохранение...');
+        document.getElementById('status').textContent = '⏳ Сохранение...';
+        document.getElementById('status').className = 'status online';
+
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(playersData, null, 2))));
+
+        const body = {
+            message: 'Обновление данных через сайт',
+            content: content,
+            sha: currentSha || null
+        };
+
+        fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify(body)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка сохранения: ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            currentSha = data.content.sha;
+            document.getElementById('status').textContent = '✅ JSON сохранён в корне репозитория!';
+            document.getElementById('status').className = 'status online';
+            showToast('✅ JSON создан в корне!');
+            console.log('✅ Файл сохранён:', data.content.html_url);
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            document.getElementById('status').textContent = '❌ Ошибка: ' + error.message;
+            document.getElementById('status').className = 'status offline';
+            showToast('❌ Ошибка: ' + error.message);
+        });
+    }
 
     // ============================================
     // ДОБАВЛЕНИЕ ИГРОКА
@@ -112,30 +195,25 @@
             return;
         }
 
-        // Добавляем игрока в JSON
         playersData.players.push({
             id: 'p' + Date.now(),
             name: name,
             trophies: trophies
         });
 
-        // Очищаем поля
         document.getElementById('playerName').value = '';
         document.getElementById('playerTrophies').value = '0';
 
-        // Показываем обновлённый список
-        showData();
-
-        // Выводим JSON в консоль (для проверки)
-        console.log('Текущий JSON:', JSON.stringify(playersData, null, 2));
+        showPlayers();
+        showToast('✅ Добавлен: ' + name);
     }
 
     // ============================================
     // ПОКАЗАТЬ ТОП
     // ============================================
-    function showData() {
+    function showPlayers() {
         const list = document.getElementById('list');
-        const players = playersData.players;
+        const players = playersData.players || [];
 
         if (players.length === 0) {
             list.innerHTML = '<div class="empty">👾 Нет игроков</div>';
@@ -143,7 +221,6 @@
             return;
         }
 
-        // Сортируем по кубкам
         players.sort((a, b) => b.trophies - a.trophies);
 
         let html = '';
@@ -174,18 +251,28 @@
     function clearAll() {
         if (!confirm('Удалить всех игроков?')) return;
         playersData.players = [];
-        showData();
-        console.log('JSON очищен:', JSON.stringify(playersData, null, 2));
+        showPlayers();
+        showToast('🗑️ Все игроки удалены');
     }
 
     // ============================================
-    // ПОКАЗАТЬ JSON В КОНСОЛИ (для проверки)
+    // УВЕДОМЛЕНИЯ
     // ============================================
-    console.log('JSON создан!');
-    console.log('Текущий JSON:', JSON.stringify(playersData, null, 2));
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast show';
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.className = 'toast';
+        }, 3000);
+    }
 
-    // Показываем начальный список
-    showData();
+    // ============================================
+    // ЗАПУСК
+    // ============================================
+    showPlayers();
+    console.log('📁 JSON будет создан в корне репозитория при нажатии "Сохранить"');
 </script>
 </body>
 </html>
