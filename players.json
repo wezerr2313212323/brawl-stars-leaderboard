@@ -1,0 +1,6 @@
+{
+  "players": [
+    {"id": "p1", "name": "Вася", "trophies": 100},
+    {"id": "p2", "name": "Петя", "trophies": 200}
+  ]
+}
