@@ -1,0 +1,2 @@
+# brawl-stars-leaderboard
+опционально
