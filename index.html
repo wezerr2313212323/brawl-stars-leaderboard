@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Brawl Stars — Лидеры</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            color: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #16213e;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h1 span {
+            color: #e94560;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background: #0f3460;
+            color: #4CAF50;
+        }
+        .add-form {
+            background: #0f3460;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .add-form input {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .add-form input::placeholder {
+            color: #666;
+        }
+        .add-form button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            background: #e94560;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .add-form button:hover {
+            background: #c73a52;
+            transform: scale(1.02);
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #0f3460;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .controls button:hover {
+            background: #1a4f7a;
+        }
+        .controls .btn-refresh {
+            background: #2196F3;
+        }
+        .controls .btn-refresh:hover {
+            background: #1976D2;
+        }
+        .controls .btn-delete-all {
+            background: #f44336;
+        }
+        .controls .btn-delete-all:hover {
+            background: #d32f2f;
+        }
+        .controls .btn-export {
+            background: #4CAF50;
+        }
+        .controls .btn-export:hover {
+            background: #388E3C;
+        }
+        .player {
+            background: #0f3460;
+            margin: 8px 0;
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .player:hover {
+            background: #1a4f7a;
+            transform: translateX(5px);
+        }
+        .player .rank {
+            font-weight: bold;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+        .player .name {
+            flex: 1;
+        }
+        .player .trophies {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .player .actions button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .player .actions .edit-btn:hover {
+            background: #4CAF50;
+        }
+        .player .actions .delete-btn:hover {
+            background: #f44336;
+        }
+        .player.top1 {
+            background: #ffd700;
+            color: #1a1a2e;
+        }
+        .player.top1 .trophies {
+            color: #1a1a2e;
+        }
+        .player.top2 {
+            background: #c0c0c0;
+            color: #1a1a2e;
+        }
+        .player.top2 .trophies {
+            color: #1a1a2e;
+        }
+        .player.top3 {
+            background: #cd7f32;
+            color: #1a1a2e;
+        }
+        .player.top3 .trophies {
+            color: #1a1a2e;
+        }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 18px;
+            background: #0f3460;
+            color: white;
+            margin: 15px 0;
+        }
+        .modal-content button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .modal-content .save-btn {
+            background: #4CAF50;
+            color: white;
+        }
+        .modal-content .cancel-btn {
+            background: #f44336;
+            color: white;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #444;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 <span>BRAWL</span> STARS</h1>
+        <p class="subtitle">Таблица лидеров</p>
+        <div class="status">💾 Данные хранятся локально (только на этом компьютере)</div>
+
+        <div class="add-form">
+            <input type="text" id="newName" placeholder="Имя игрока">
+            <input type="number" id="newTrophies" placeholder="Кубки" value="0" min="0">
+            <button onclick="addPlayer()">➕ Добавить</button>
+        </div>
+
+        <div class="controls">
+            <button class="btn-refresh" onclick="loadData()">🔄 Обновить</button>
+            <button class="btn-export" onclick="exportData()">📥 Экспорт</button>
+            <button class="btn-delete-all" onclick="deleteAllPlayers()">🗑️ Очистить всё</button>
+        </div>
+
+        <div id="playersList"></div>
+
+        <div class="footer">
+            <span id="playerCount">0</span> игроков
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2>✏️ Редактировать</h2>
+            <input type="text" id="editName" placeholder="Имя">
+            <input type="number" id="editTrophies" placeholder="Кубки" min="0">
+            <div>
+                <button class="save-btn" onclick="saveEdit()">💾 Сохранить</button>
+                <button class="cancel-btn" onclick="closeEdit()">❌ Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ВСЁ В LOCALSTORAGE (без Firebase)
+        // ============================================
+        const STORAGE_KEY = 'brawl_stars_players';
+        let players = [];
+        let editingId = null;
+
+        // ============================================
+        // ЗАГРУЗКА ДАННЫХ
+        // ============================================
+        function loadData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    players = JSON.parse(data);
+                } catch (e) {
+                    players = [];
+                }
+            } else {
+                // Если нет данных — создаём тестовых игроков
+                players = [
+                    { id: 'p1', name: 'Вася', trophies: 150 },
+                    { id: 'p2', name: 'Петя', trophies: 230 },
+                    { id: 'p3', name: 'Анна', trophies: 89 }
+                ];
+                saveToStorage();
+            }
+            renderPlayers();
+        }
+
+        // ============================================
+        // СОХРАНЕНИЕ В LOCALSTORAGE
+        // ============================================
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+        }
+
+        // ============================================
+        // ОТОБРАЖЕНИЕ ИГРОКОВ
+        // ============================================
+        function renderPlayers() {
+            const list = document.getElementById('playersList');
+
+            if (!players || players.length === 0) {
+                list.innerHTML = '<div class="empty">👾 Нет игроков<br><small>Добавь первого!</small></div>';
+                document.getElementById('playerCount').textContent = '0';
+                return;
+            }
+
+            // Сортируем по кубкам (по убыванию)
+            players.sort((a, b) => b.trophies - a.trophies);
+
+            let html = '';
+            const top10 = players.slice(0, 10);
+
+            top10.forEach((player, index) => {
+                let rankClass = '';
+                let rankText = (index + 1);
+
+                if (index === 0) {
+                    rankClass = 'top1';
+                    rankText = '🥇';
+                } else if (index === 1) {
+                    rankClass = 'top2';
+                    rankText = '🥈';
+                } else if (index === 2) {
+                    rankClass = 'top3';
+                    rankText = '🥉';
+                } else {
+                    rankText = '#' + (index + 1);
+                }
+
+                html += `
+                    <div class="player ${rankClass}">
+                        <span class="rank">${rankText}</span>
+                        <span class="name">${escapeHtml(player.name)}</span>
+                        <span class="trophies">🏆 ${player.trophies}</span>
+                        <span class="actions">
+                            <button class="edit-btn" onclick="openEdit('${player.id}')" title="Редактировать">✏️</button>
+                            <button class="delete-btn" onclick="deletePlayer('${player.id}')" title="Удалить">🗑️</button>
+                        </span>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+            document.getElementById('playerCount').textContent = players.length;
+        }
+
+        // ============================================
+        // ДОБАВЛЕНИЕ ИГРОКА
+        // ============================================
+        function addPlayer() {
+            const nameInput = document.getElementById('newName');
+            const trophiesInput = document.getElementById('newTrophies');
+
+            const name = nameInput.value.trim();
+            const trophies = parseInt(trophiesInput.value) || 0;
+
+            if (!name) {
+                alert('Введите имя игрока!');
+                nameInput.focus();
+                return;
+            }
+
+            const id = 'p' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            players.push({ id, name, trophies });
+            saveToStorage();
+            renderPlayers();
+
+            nameInput.value = '';
+            trophiesInput.value = '0';
+        }
+
+        // ============================================
+        // УДАЛЕНИЕ ИГРОКА
+        // ============================================
+        function deletePlayer(id) {
+            if (!confirm('Удалить этого игрока?')) return;
+            players = players.filter(p => p.id !== id);
+            saveToStorage();
+            renderPlayers();
+        }
+
+        // ============================================
+        // УДАЛЕНИЕ ВСЕХ
+        // ============================================
+        function deleteAllPlayers() {
+            if (!confirm('Удалить ВСЕХ игроков?')) return;
+            if (!confirm('Точно?')) return;
+            players = [];
+            saveToStorage();
+            renderPlayers();
+        }
+
+        // ============================================
+        // РЕДАКТИРОВАНИЕ (открыть)
+        // ============================================
+        function openEdit(id) {
+            const player = players.find(p => p.id === id);
+            if (!player) return;
+
+            editingId = id;
+            document.getElementById('editName').value = player.name;
+            document.getElementById('editTrophies').value = player.trophies;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEdit() {
+            document.getElementById('editModal').classList.remove('active');
+            editingId = null;
+        }
+
+        // ============================================
+        // РЕДАКТИРОВАНИЕ (сохранить)
+        // ============================================
+        function saveEdit() {
+            if (!editingId) return;
+
+            const name = document.getElementById('editName').value.trim();
+            const trophies = parseInt(document.getElementById('editTrophies').value) || 0;
+
+            if (!name) {
+                alert('Имя не может быть пустым!');
+                return;
+            }
+
+            const player = players.find(p => p.id === editingId);
+            if (player) {
+                player.name = name;
+                player.trophies = trophies;
+                saveToStorage();
+                renderPlayers();
+            }
+
+            closeEdit();
+        }
+
+        // ============================================
+        // ЭКСПОРТ ДАННЫХ
+        // ============================================
+        function exportData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) {
+                alert('Нет данных для экспорта');
+                return;
+            }
+
+            // Создаём файл для скачивания
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'brawl_stars_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================
+        // ВСПОМОГАТЕЛЬНЫЕ
+        // ============================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // ЗАПУСК
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeEdit();
+        });
+
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeEdit();
+        });
+
+        loadData();
+    </script>
+</body>
+</html>
